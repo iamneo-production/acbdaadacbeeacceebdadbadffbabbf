@@ -1,99 +1,61 @@
-import { useState } from "react";
+import React, { useState, useEffect } from 'react';
 
-const Stopwatch = () => {
-    const [timer, setTimer] = useState({ hr: 0, m: 0, s: 0,ms:0 });
-    const [inter, setInter] = useState();
+function Stopwatch() {
+  const [time, setTime] = useState(0);
+  const [isActive, setIsActive] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
 
-    var uphr = timer.hr,
-        upm = timer.m,
-        ups = timer.s,
-        upms = timer.ms;
-    
-    const run = () => {
-        if (upms === 36) {
-            upms = 0;
-            ups++;
-          }
-        if (ups === 60) {
-            ups = 0;
-            upm++;
-          }
-        if (upm === 60) {
-            upm = 0;
-            uphr++;
-          }
-          upms++;
-          console.log(upms, ups, upm);
-        setTimer({ hr: uphr, m: upm, s: ups, ms: upms });
+  useEffect(() => {
+    let intervalId;
+    if (isActive) {
+      intervalId = setInterval(() => {
+        setTime(prevTime => prevTime + 1);
+      }, 1000);
     }
+    return () => clearInterval(intervalId);
+  }, [isActive]);
 
-    // for disable reset button
-    const [isDisabled, setIsDisabled] = useState(true);
-    // for render start btn
-    const [start, setStart] = useState(true);
-    // for render pause btn
-    const [pause, setPause] = useState(false);
-    // for render resume btn
-    const [resume, setResume] = useState(false);
+  const handleStart = () => {
+    setIsActive(true);
+  };
 
-    //  click event for start btn
-    const clickStart = () => {
-        setIsDisabled(!isDisabled)
-        setStart(false)
-        setPause(true)
-        run()
-        setInter(setInterval(run, 20));
-    }
-    
-    // click event for pause btn
-    const clickPause = () => {
-        setPause(false)
-        setResume(true)
-        clearInterval(inter)
-    }
+  const handlePause = () => {
+    setIsPaused(true);
+    setIsActive(false);
+  };
 
-    // click event for pause btn
-    const clickResume = () => {
-        setResume(false)
-        setPause(true)
-        run()
-        setInter(setInterval(run, 20));
-    }
+  const handleResume = () => {
+    setIsPaused(false);
+    setIsActive(true);
+  };
 
-    // click event for reset btn
-    const clickReset = () => {
-        clearInterval(inter);
-        setTimer({ hr: 0, m: 0, s: 0, ms: 0 })
-        setIsDisabled(!isDisabled)
-        setPause(false)
-        setResume(false)
-        setStart(true)
-    }
+  const handleReset = () => {
+    setTime(0);
+    setIsPaused(false);
+    setIsActive(false);
+  };
 
+  const formatTime = (timeInSeconds) => {
+    const hours = Math.floor(timeInSeconds / 3600);
+    const minutes = Math.floor((timeInSeconds - (hours * 3600)) / 60);
+    const seconds = timeInSeconds - (hours * 3600) - (minutes * 60);
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  }
 
-
-    return (
-        <div className="">
-            <div className="bg-cyan-300 pt-6 pb-4 px-2 mx-20 my-20 rounded-2xl">
-                <p className="float-right mr-2">learn react</p>
-                
-                <div className="bg-white mt-8 p flex justify-center text-4xl">
-                    <div >
-                        <h1 className="text-center  py-4">React Stopwatch</h1>
-                        <p data-testid="time " className=" mt-4 text-center">
-                            <span>{timer.hr >= 10 ? timer.hr : " 0" + timer.hr}</span> :  
-                            <span>{timer.m >= 10 ?  " "+timer.m : " 0" + timer.m}</span> :  
-                            <span>{timer.s >= 10 ? " "+timer.s : " 0" + timer.s}</span>   
-                        </p>
-                        {start && <button data-testid="start" onClick={clickStart} className="my-4 ml-10 bg-gray-200 px-4 py-2 rounded border-2 border-black hover:bg-white" >Start</button>}
-                        {pause && <button data-testid="pause" onClick={clickPause} className="my-4 ml-10 bg-gray-200 px-4 py-2 rounded border-2 border-black hover:bg-white" >Pause</button>}
-                        {resume && <button data-testid="resume" onClick={clickResume} className="my-4 ml-10 bg-gray-200 px-4 py-2 rounded border-2 border-black hover:bg-white" >Resume</button>}
-                        <button disabled={isDisabled} data-testid="reset" onClick={clickReset} className="my-4 ml-10 bg-gray-200 px-4 py-2 rounded border-2 border-black hover:bg-white" >Reset</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
+  return (
+    <div style={{display: "flex", flexDirection: "column", alignItems: "center", border: "2px solid #00BFFF", padding: "20px"}}>
+      <h1 style={{textAlign: "center"}}>React Stopwatch</h1>
+      <p style={{fontSize: "3rem"}} data-testid="time">{formatTime(time)}</p>
+      {isPaused ? (
+        <button style={{background: "#00BFFF", color: "white", fontWeight: "bold", fontSize: "1rem", padding: "10px 20px", margin: "10px"}} data-testid="resume" onClick={handleResume}>Resume</button>
+      ) : isActive ? (
+        <button style={{background: "#FF6347", color: "white", fontWeight: "bold", fontSize: "1rem", padding: "10px 20px", margin: "10px"}} data-testid="pause" onClick={handlePause}>Pause</button>
+      ) : (
+        <button style={{background: "#008000", color: "white", fontWeight: "bold", fontSize: "1rem", padding: "10px 20px", margin: "10px"}} data-testid="start" onClick={handleStart}>Start</button>
+      )}
+      <button style={{background: "#D3D3D3", color: "black", fontWeight: "bold", fontSize: "1rem", padding: "10px 20px", margin: "10px"}} data-testid="reset" onClick={handleReset} disabled={!isActive && time === 0}>Reset</button>
+    </div>
+  );
 }
 
 export default Stopwatch;
